@@ -16,6 +16,8 @@ import (
 	"golang.org/x/mobile/event/size"
 )
 
+const WindowSide = 800
+
 type Visualizer struct {
 	Title         string
 	Debug         bool
@@ -43,7 +45,9 @@ func (pw *Visualizer) Update(t screen.Texture) {
 
 func (pw *Visualizer) run(s screen.Screen) {
 	w, err := s.NewWindow(&screen.NewWindowOptions{
-		Title: pw.Title,
+		Title:  pw.Title,
+		Width:  WindowSide,
+		Height: WindowSide,
 	})
 	if err != nil {
 		log.Fatal("Failed to initialize the app window:", err)
