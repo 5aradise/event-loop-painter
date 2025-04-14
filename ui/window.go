@@ -155,13 +155,21 @@ func (pw *Visualizer) drawDefaultUI() {
 	}
 }
 
-func (pw *Visualizer) DrawT() {
-	x := pw.pos.X
-	y := pw.pos.Y
+func drawTFigure(fillFunc func(r image.Rectangle, c color.Color, op draw.Op), pos image.Point) {
+	x := pos.X
+	y := pos.Y
 
 	rect1 := image.Rect(x-200, y, x+200, y+100)
 	rect2 := image.Rect(x-50, y-200, x+50, y)
 
-	pw.w.Fill(rect1, Yellow, draw.Src)
-	pw.w.Fill(rect2, Yellow, draw.Src)
+	fillFunc(rect1, Yellow, draw.Src)
+	fillFunc(rect2, Yellow, draw.Src)
+}
+
+func (pw *Visualizer) DrawT() {
+	drawTFigure(pw.w.Fill, pw.pos)
+}
+
+func Figure(t screen.Texture, pos image.Point) {
+	drawTFigure(t.Fill, pos)
 }
