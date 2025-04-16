@@ -16,6 +16,13 @@ import (
 	"golang.org/x/mobile/event/size"
 )
 
+const WindowSide = 800
+
+var (
+	Green  = color.RGBA{R: 100, G: 200, B: 100}
+	Yellow = color.RGBA{R: 255, G: 200, B: 100}
+)
+
 type Visualizer struct {
 	Title         string
 	Debug         bool
@@ -26,14 +33,14 @@ type Visualizer struct {
 	done chan struct{}
 
 	sz  size.Event
-	pos image.Rectangle
+	pos image.Point
 }
 
 func (pw *Visualizer) Main() {
 	pw.tx = make(chan screen.Texture)
 	pw.done = make(chan struct{})
-	pw.pos.Max.X = 200
-	pw.pos.Max.Y = 200
+	pw.pos.X = WindowSide / 2
+	pw.pos.Y = WindowSide / 2
 	driver.Main(pw.run)
 }
 
@@ -43,7 +50,9 @@ func (pw *Visualizer) Update(t screen.Texture) {
 
 func (pw *Visualizer) run(s screen.Screen) {
 	w, err := s.NewWindow(&screen.NewWindowOptions{
-		Title: pw.Title,
+		Title:  pw.Title,
+		Width:  WindowSide,
+		Height: WindowSide,
 	})
 	if err != nil {
 		log.Fatal("Failed to initialize the app window:", err)
@@ -115,7 +124,12 @@ func (pw *Visualizer) handleEvent(e any, t screen.Texture) {
 
 	case mouse.Event:
 		if t == nil {
-			// TODO: Реалізувати реакцію на натискання кнопки миші.
+			if e.Button == mouse.ButtonLeft {
+				x := int(e.X)
+				y := int(e.Y)
+				pw.pos = image.Point{x, y}
+				pw.w.Send(paint.Event{})
+			}
 		}
 
 	case paint.Event:
@@ -131,9 +145,9 @@ func (pw *Visualizer) handleEvent(e any, t screen.Texture) {
 }
 
 func (pw *Visualizer) drawDefaultUI() {
-	pw.w.Fill(pw.sz.Bounds(), color.Black, draw.Src) // Фон.
+	pw.w.Fill(pw.sz.Bounds(), Green, draw.Src) // Фон.
 
-	// TODO: Змінити колір фону та додати відображення фігури у вашому варіанті.
+	pw.DrawT()
 
 	// Малювання білої рамки.
 	for _, br := range imageutil.Border(pw.sz.Bounds(), 10) {
@@ -141,6 +155,33 @@ func (pw *Visualizer) drawDefaultUI() {
 	}
 }
 
+func drawTFigure(
+	fillFunc func(r image.Rectangle, c color.Color, op draw.Op),
+	pos image.Point,
+	bounds image.Rectangle,
+) {
+	x := pos.X
+	y := pos.Y
+
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	horizW := width / 2
+	horizH := height / 8
+	vertW := width / 8
+	vertH := height / 4
+
+	rect1 := image.Rect(x-horizW/2, y, x+horizW/2, y+horizH)
+	rect2 := image.Rect(x-vertW/2, y-vertH, x+vertW/2, y)
+
+	fillFunc(rect1, Yellow, draw.Src)
+	fillFunc(rect2, Yellow, draw.Src)
+}
+
+func (pw *Visualizer) DrawT() {
+	drawTFigure(pw.w.Fill, pw.pos, pw.sz.Bounds())
+}
+
 func Figure(t screen.Texture, pos image.Point) {
-	t.Fill(image.Rectangle{pos, pos}, color.White, draw.Src)
+	drawTFigure(t.Fill, pos, t.Bounds())
 }
