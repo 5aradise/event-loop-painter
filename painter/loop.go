@@ -6,55 +6,80 @@ import (
 	"golang.org/x/exp/shiny/screen"
 )
 
-// Receiver отримує текстуру, яка була підготовлена в результаті виконання команд у циклі подій.
 type Receiver interface {
 	Update(t screen.Texture)
 }
 
-// Loop реалізує цикл подій для формування текстури отриманої через виконання операцій отриманих з внутрішньої черги.
 type Loop struct {
 	Receiver Receiver
 
-	next screen.Texture // текстура, яка зараз формується
-	prev screen.Texture // текстура, яка була відправлення останнього разу у Receiver
+	curr screen.Texture
+
+	state *textureState
 
 	mq messageQueue
 
-	stop    chan struct{}
-	stopReq bool
+	stop chan struct{}
 }
 
-var size = image.Pt(400, 400)
+var (
+	size             = image.Pt(800, 800)
+	MessageQueueSize = 1 << 10
+)
 
-// Start запускає цикл подій. Цей метод потрібно запустити до того, як викликати на ньому будь-які інші методи.
-func (l *Loop) Start(s screen.Screen) {
-	l.next, _ = s.NewTexture(size)
-	l.prev, _ = s.NewTexture(size)
-
-	// TODO: стартувати цикл подій.
-}
-
-// Post додає нову операцію у внутрішню чергу.
-func (l *Loop) Post(op Operation) {
-	if update := op.Do(l.next); update {
-		l.Receiver.Update(l.next)
-		l.next, l.prev = l.prev, l.next
+func NewLoop() *Loop {
+	return &Loop{
+		mq:   messageQueue{make(chan any, MessageQueueSize)},
+		stop: make(chan struct{}),
 	}
 }
 
-// StopAndWait сигналізує про необхідність завершити цикл та блокується до моменту його повної зупинки.
+func (l *Loop) Start(s screen.Screen) {
+	l.curr, _ = s.NewTexture(size)
+
+	l.state = &textureState{}
+
+loop:
+	for {
+		switch msg := l.mq.pull().(type) {
+		case Operation:
+			update := msg.Do(l.state)
+			if update {
+				l.state.set(l.curr)
+				l.Receiver.Update(l.curr)
+				l.curr, _ = s.NewTexture(size)
+				l.state = &textureState{}
+			}
+
+		case closeSignal:
+			break loop
+
+		default:
+			panic("message in messageQueue not Operation or closeSignal")
+		}
+	}
+	close(l.stop)
+}
+
+func (l *Loop) Post(op Operation) {
+	l.mq.push(op)
+}
+
+type closeSignal struct{}
+
 func (l *Loop) StopAndWait() {
+	l.mq.push(closeSignal{})
+	<-l.stop
 }
 
-// TODO: Реалізувати чергу подій.
-type messageQueue struct{}
-
-func (mq *messageQueue) push(op Operation) {}
-
-func (mq *messageQueue) pull() Operation {
-	return nil
+type messageQueue struct {
+	buf chan any
 }
 
-func (mq *messageQueue) empty() bool {
-	return false
+func (mq *messageQueue) push(v any) {
+	mq.buf <- v
+}
+
+func (mq *messageQueue) pull() any {
+	return <-mq.buf
 }

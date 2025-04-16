@@ -6,6 +6,7 @@ import (
 	"github.com/roman-mazur/architecture-lab-3/painter"
 	"github.com/roman-mazur/architecture-lab-3/painter/lang"
 	"github.com/roman-mazur/architecture-lab-3/ui"
+	"golang.org/x/exp/shiny/screen"
 )
 
 func main() {
@@ -13,18 +14,20 @@ func main() {
 		pv ui.Visualizer // Візуалізатор створює вікно та малює у ньому.
 
 		// Потрібні для частини 2.
-		opLoop painter.Loop // Цикл обробки команд.
-		parser lang.Parser  // Парсер команд.
+		opLoop = painter.NewLoop() // Цикл обробки команд.
+		parser lang.Parser         // Парсер команд.
 	)
 
 	//pv.Debug = true
 	pv.Title = "Simple painter"
 
-	pv.OnScreenReady = opLoop.Start
+	pv.OnScreenReady = func(s screen.Screen) {
+		go opLoop.Start(s)
+	}
 	opLoop.Receiver = &pv
 
 	go func() {
-		http.Handle("/", lang.HttpHandler(&opLoop, &parser))
+		http.Handle("/", lang.HttpHandler(opLoop, &parser))
 		_ = http.ListenAndServe("localhost:17000", nil)
 	}()
 
