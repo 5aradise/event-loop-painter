@@ -140,3 +140,7 @@ func (pw *Visualizer) drawDefaultUI() {
 		pw.w.Fill(br, color.White, draw.Src)
 	}
 }
+
+func Figure(t screen.Texture, pos image.Point) {
+	t.Fill(image.Rectangle{pos, pos}, color.White, draw.Src)
+}
