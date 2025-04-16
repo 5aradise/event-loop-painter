@@ -155,21 +155,33 @@ func (pw *Visualizer) drawDefaultUI() {
 	}
 }
 
-func drawTFigure(fillFunc func(r image.Rectangle, c color.Color, op draw.Op), pos image.Point) {
+func drawTFigure(
+	fillFunc func(r image.Rectangle, c color.Color, op draw.Op),
+	pos image.Point,
+	bounds image.Rectangle,
+) {
 	x := pos.X
 	y := pos.Y
 
-	rect1 := image.Rect(x-200, y, x+200, y+100)
-	rect2 := image.Rect(x-50, y-200, x+50, y)
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	horizW := width / 2
+	horizH := height / 8
+	vertW := width / 8
+	vertH := height / 4
+
+	rect1 := image.Rect(x-horizW/2, y, x+horizW/2, y+horizH)
+	rect2 := image.Rect(x-vertW/2, y-vertH, x+vertW/2, y)
 
 	fillFunc(rect1, Yellow, draw.Src)
 	fillFunc(rect2, Yellow, draw.Src)
 }
 
 func (pw *Visualizer) DrawT() {
-	drawTFigure(pw.w.Fill, pw.pos)
+	drawTFigure(pw.w.Fill, pw.pos, pw.sz.Bounds())
 }
 
 func Figure(t screen.Texture, pos image.Point) {
-	drawTFigure(t.Fill, pos)
+	drawTFigure(t.Fill, pos, t.Bounds())
 }
