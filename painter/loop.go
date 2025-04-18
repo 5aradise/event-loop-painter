@@ -37,7 +37,7 @@ func NewLoop() *Loop {
 func (l *Loop) Start(s screen.Screen) {
 	l.curr, _ = s.NewTexture(size)
 
-	l.state = &textureState{}
+	l.state = newTextureState()
 
 loop:
 	for {
@@ -48,7 +48,7 @@ loop:
 				l.state.set(l.curr)
 				l.Receiver.Update(l.curr)
 				l.curr, _ = s.NewTexture(size)
-				l.state = &textureState{}
+				l.state = newTextureState()
 			}
 
 		case closeSignal:

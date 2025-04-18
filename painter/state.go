@@ -17,6 +17,12 @@ type textureState struct {
 	figures []Point
 }
 
+func newTextureState() *textureState {
+	s := &textureState{}
+	s.background.color = color.Black
+	return s
+}
+
 func (s *textureState) set(t screen.Texture) {
 	t.Fill(t.Bounds(), s.background.color, screen.Src)
 	if s.background.rect != nil {
