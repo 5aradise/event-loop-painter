@@ -167,8 +167,8 @@ func drawTFigure(
 	height := bounds.Dy()
 
 	horizW := width / 2
-	horizH := height / 8
-	vertW := width / 8
+	horizH := height / 6
+	vertW := width / 6
 	vertH := height / 4
 
 	rect1 := image.Rect(x-horizW/2, y, x+horizW/2, y+horizH)

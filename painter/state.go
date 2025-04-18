@@ -12,15 +12,15 @@ import (
 type textureState struct {
 	background struct {
 		color color.Color
-		rects []Rectangle
+		rect  *Rectangle
 	}
 	figures []Point
 }
 
 func (s *textureState) set(t screen.Texture) {
 	t.Fill(t.Bounds(), s.background.color, screen.Src)
-	for _, rect := range s.background.rects {
-		t.Fill(rect.
+	if s.background.rect != nil {
+		t.Fill(s.background.rect.
 			Resize(image.Pt(t.Bounds().Dx(), t.Bounds().Dy())).
 			ToImage().
 			Add(t.Bounds().Min), color.Black, screen.Src)
@@ -34,8 +34,18 @@ func (s *textureState) set(t screen.Texture) {
 }
 
 func (s1 textureState) Equal(s2 textureState) bool {
+	var isRectsEqual bool
+	rect1, rect2 := s1.background.rect, s2.background.rect
+	if rect1 != nil {
+		if rect2 != nil {
+			isRectsEqual = *rect1 == *rect2
+		}
+	} else {
+		isRectsEqual = rect1 == rect2
+	}
+
 	return isColorsEqual(s1.background.color, s2.background.color) &&
-		slices.Equal(s1.background.rects, s2.background.rects) &&
+		isRectsEqual &&
 		slices.Equal(s1.figures, s2.figures)
 }
 

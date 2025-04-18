@@ -40,7 +40,7 @@ var GreenFill OperationFunc = func(s *textureState) {
 
 func BgRect(coords Rectangle) OperationFunc {
 	return func(s *textureState) {
-		s.background.rects = append(s.background.rects, coords)
+		s.background.rect = &coords
 	}
 }
 
@@ -60,6 +60,6 @@ func Move(coords Point) OperationFunc {
 
 var Reset OperationFunc = func(s *textureState) {
 	s.background.color = color.Black
-	s.background.rects = s.background.rects[:0]
+	s.background.rect = nil
 	s.figures = s.figures[:0]
 }

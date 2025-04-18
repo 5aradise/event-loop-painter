@@ -4,7 +4,6 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"slices"
 	"testing"
 
 	"golang.org/x/exp/shiny/screen"
@@ -76,7 +75,7 @@ func TestBackgroundColoring(t *testing.T) {
 	}
 }
 
-func TestBgRect(t *testing.T) {
+func TestLastBgRect(t *testing.T) {
 	var (
 		l = NewLoop()
 		r mockReceiver
@@ -97,16 +96,14 @@ func TestBgRect(t *testing.T) {
 	l.Post(Update)
 	l.StopAndWait()
 
-	want := []image.Rectangle{
-		rect1.Resize(size).ToImage(),
-		rect2.Resize(size).ToImage(),
-		rect3.Resize(size).ToImage(),
-		rect4.Resize(size).ToImage(),
-	}
+	want := rect4.Resize(size).ToImage()
 
 	texture := r.textures[0].(*mockTexture)
-	if !slices.Equal(texture.rects, want) {
-		t.Errorf("have: %v, want: %v", texture.rects, want)
+	if len(texture.rects) != 1 {
+		t.Errorf("saved more than last BgRect")
+	}
+	if texture.rects[0] != want {
+		t.Errorf("have: %v, want: %v", texture.rects[0], want)
 	}
 }
 
@@ -175,8 +172,11 @@ func TestReset(t *testing.T) {
 	l.StopAndWait()
 
 	texture := r.textures[0].(*mockTexture)
-	if !(len(texture.rects) == 0 && isColorsEqual(texture.bgColor, color.Black)) {
-		t.Errorf("texture contain shapes and is not black")
+	if len(texture.rects) != 0 {
+		t.Errorf("texture contain shapes")
+	}
+	if !isColorsEqual(texture.bgColor, color.Black) {
+		t.Errorf("texture is not black")
 	}
 }
 
